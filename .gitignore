@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+__pycache__/
+venv/
+env/
+
+# Environment Variables (NEVER UPLOAD API KEYS)
+.env
+
+# Build outputs
+dist/
+build/
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
