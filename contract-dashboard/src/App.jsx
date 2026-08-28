@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import "./App.css";
+import TubesCursor from "./TubesCursor";
 
 // Initial Default Data
 const initialContracts = [
@@ -25,7 +26,7 @@ function App() {
     const fadeTimer = setTimeout(() => setFadeLoader(true), 3500);
     const removeTimer = setTimeout(() => setIsLoading(false), 4000);
 
-    // 2. Cursor Glow Tracker (Powers the Spotlight in CSS)
+    // 2. Cursor Glow Tracker
     const handleMouseMove = (e) => {
       document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
       document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
@@ -67,7 +68,7 @@ function App() {
     else if (actionType === "billing") {
       const newAlert = {
         title: "API Billing & Quota",
-        description: "Gemini API active. Current tier: Unlimited Hackathon Developer Access.",
+        description: "Gemini 2.0 Flash API active. Current tier: Unlimited Hackathon Developer Access.",
         type: "info",
         icon: "📄"
       };
@@ -75,7 +76,7 @@ function App() {
       setActivePage("alerts"); 
     } 
     else if (actionType === "logout") {
-      // Re-trigger the stunning boot screen for a demo reset effect!
+      // Re-trigger the stunning boot screen for a demo reset effect
       setIsLoading(true);
       setFadeLoader(false);
       setTimeout(() => setFadeLoader(true), 3500);
@@ -167,6 +168,7 @@ function App() {
   // ---------------- RENDER MAIN DASHBOARD ----------------
   return (
     <div className="app fade-in-app">
+      <TubesCursor />
       
       {/* SIDEBAR */}
       <aside className="sidebar glass-panel">
@@ -219,7 +221,6 @@ function App() {
           </div>
           <div className="top-actions">
             <button className="primary-button" onClick={() => setShowUpload(true)}>+ Upload Contract</button>
-            <button className="notification-button">◇<span className="badge-dot"></span></button>
             
             <div className="profile" style={{ position: 'relative' }}>
               <div className="mini-avatar" onClick={() => setShowProfileMenu(!showProfileMenu)}>BC</div>
@@ -463,6 +464,7 @@ function Alerts({ alerts }) {
 function UploadModal({ close, onSuccess }) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState(null);
+  const [phone, setPhone] = useState(""); 
   const fileInputRef = useRef(null);
 
   const handleFileChange = async (event) => {
@@ -474,6 +476,9 @@ function UploadModal({ close, onSuccess }) {
 
     const formData = new FormData();
     formData.append("file", file);
+    if (phone) {
+      formData.append("phone", phone);
+    }
 
     try {
       const response = await fetch("http://127.0.0.1:8000/analyze-contract/", {
@@ -511,6 +516,19 @@ function UploadModal({ close, onSuccess }) {
         {error && <div style={{color: "var(--risk-high)", background: "var(--risk-high-bg)", padding: "10px", borderRadius: "8px", marginBottom: "16px", textAlign: "center", fontSize:"0.9rem"}}>{error}</div>}
 
         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".pdf" style={{ display: "none" }} />
+
+        {!isUploading && (
+          <div className="phone-input-container">
+            <label>Emergency SMS Alerts (Optional)</label>
+            <input 
+              type="tel" 
+              placeholder="e.g., +919876543210" 
+              value={phone} 
+              onChange={(e) => setPhone(e.target.value)}
+              className="phone-input"
+            />
+          </div>
+        )}
 
         <div 
           className="drop-zone" 

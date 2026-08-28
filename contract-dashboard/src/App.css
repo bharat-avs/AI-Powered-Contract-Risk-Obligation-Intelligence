@@ -50,24 +50,18 @@ body {
   overflow: hidden; 
 }
 
-/* ---------------- DYNAMIC CURSOR SPOTLIGHT (UPDATED FROM VIDEO) ---------------- */
+/* ---------------- DYNAMIC CURSOR GLOW ---------------- */
 body::before {
   content: "";
   position: fixed;
-  top: 0; 
-  left: 0; 
-  width: 100vw; 
-  height: 100vh;
-  /* Wide, vibrant cyan/blue spotlight matching the video */
+  top: 0; left: 0; width: 100vw; height: 100vh;
   background: radial-gradient(
-    800px circle at var(--mouse-x) var(--mouse-y), 
-    rgba(56, 189, 248, 0.15), 
+    600px circle at var(--mouse-x) var(--mouse-y), 
+    rgba(99, 102, 241, 0.15),
     transparent 40%
   );
   pointer-events: none; 
   z-index: 9999;
-  mix-blend-mode: screen; /* This makes it act like a real flashlight */
-  transition: background 0.1s ease;
 }
 
 /* ---------------- ANIMATED BACKGROUND GRID ---------------- */
@@ -83,8 +77,6 @@ body::before {
     linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
   background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
   animation: gridMove 20s linear infinite;
-  /* NOTE: If you want an image background like the video, add it here: */
-  /* background-image: url('your-image-url.jpg'); background-size: cover; */
 }
 
 @keyframes gridMove {
@@ -382,19 +374,6 @@ body::before {
 }
 .text-button:hover { text-shadow: 0 0 8px rgba(129, 140, 248, 0.5); }
 
-.notification-button {
-  background: rgba(255,255,255,0.05); border: 1px solid var(--border-light);
-  color: var(--text-main);
-  width: 40px; height: 40px; border-radius: 50%;
-  font-size: 1.2rem; position: relative; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
-.badge-dot {
-  position: absolute; top: 10px; right: 10px; width: 8px; height: 8px;
-  background: var(--risk-high); border-radius: 50%;
-  box-shadow: 0 0 8px var(--risk-high);
-}
-
 .mini-avatar {
   width: 40px; height: 40px;
   background: linear-gradient(135deg, #3730A3 0%, #312E81 100%);
@@ -595,6 +574,41 @@ tr:hover td { background: rgba(255,255,255,0.03); }
 
 .modal-actions { display: flex; justify-content: center; }
 .modal-actions button { width: 100%; padding: 12px; font-size: 1rem; }
+
+/* ---------------- PHONE INPUT ---------------- */
+.phone-input-container {
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.phone-input-container label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.phone-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.phone-input:focus {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.phone-input::placeholder {
+  color: var(--text-muted);
+}
 
 /* ---------------- PROFILE DROPDOWN ---------------- */
 .profile-dropdown {

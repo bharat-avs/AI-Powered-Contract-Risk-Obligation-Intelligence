@@ -2,20 +2,27 @@ import os
 import json
 import hashlib
 from datetime import datetime
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 import pymupdf as fitz
 import uvicorn
 from dotenv import load_dotenv
 
-# Import our NoSQL Database
+# Database & AI
 from tinydb import TinyDB
 from google import genai
 from google.genai import types
 
+# Twilio SMS
+from twilio.rest import Client
+
 load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
+# Twilio Credentials
+TWILIO_ACCOUNT_SID = "your_account_sid" 
+TWILIO_AUTH_TOKEN = "your_actual_copied_32_char_token"
+TWILIO_PHONE_NUMBER = "+17372508034"
 app = FastAPI(title="Contract Risk Intelligence API")
 
 app.add_middleware(
@@ -28,12 +35,39 @@ app.add_middleware(
 
 db = TinyDB('contracts_nosql.json')
 
+# ---------------- SMS ALERT LOGIC (UPDATED) ----------------
+def send_high_risk_sms(filename, risk_score, target_phone):
+    if not target_phone:
+        print("[SMS CANCELLED] No phone number was provided by the user.")
+        return False
+
+    message_body = f"🚨 ContractIQ ALERT: '{filename}' flagged as HIGH RISK ({risk_score}/10). Immediate legal review required."
+    print(f"\n[SMS SYSTEM TRIGGERED] Attempting to send to {target_phone}: {message_body}")
+    
+    try:
+        if TWILIO_ACCOUNT_SID == "your_account_sid":
+            print(f"[SMS SIMULATION] Twilio keys not set. Simulating SMS sent to {target_phone}.")
+            return True
+            
+        twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        message = twilio_client.messages.create(
+            body=message_body,
+            from_=TWILIO_PHONE_NUMBER,
+            to=target_phone
+        )
+        print(f"[SMS SUCCESS] Message sent. SID: {message.sid}")
+        return True
+    except Exception as e:
+        print(f"[SMS FAILED] Error: {str(e)}")
+        return False
+
+# ---------------- API ENDPOINTS ----------------
 @app.get("/")
 def read_root():
-    return {"message": "Contract AI API is running with NoSQL & Signatures enabled."}
+    return {"message": "Contract AI API is running with NoSQL, Signatures & SMS enabled."}
 
 @app.post("/analyze-contract/")
-async def analyze_contract(file: UploadFile = File(...)):
+async def analyze_contract(file: UploadFile = File(...), phone: str = Form(None)):
     print(f"\n--- NEW UPLOAD DETECTED: {file.filename} ---")
     try:
         print("1. Reading file...")
@@ -48,9 +82,8 @@ async def analyze_contract(file: UploadFile = File(...)):
         for page in doc:
             extracted_text += page.get_text()
         doc.close()
-        print(f"   -> Success! Extracted {len(extracted_text)} characters.")
         
-        print("4. Sending to Gemini AI (This may take 5-15 seconds)...")
+        print("4. Sending to Gemini AI...")
         prompt = f"""
         You are an expert legal AI assistant. Analyze the following contract or document text.
         Extract the information and format your response strictly as a JSON object with the following keys:
@@ -64,18 +97,24 @@ async def analyze_contract(file: UploadFile = File(...)):
         {extracted_text}
         """
 
-        # Using the standard, active model
         response = client.models.generate_content(
             model='gemini-3.6-flash', 
             contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-            )
+            config=types.GenerateContentConfig(response_mime_type="application/json")
         )
+        
         print("5. AI Analysis Complete! Parsing JSON...")
         ai_data = json.loads(response.text)
         
-        print("6. Saving to NoSQL Database...")
+        print("6. Checking Risk Level for SMS Alert...")
+        risk_score = ai_data.get("risk_score", 0)
+        if risk_score >= 7:
+            # Pass the dynamically entered phone number to the SMS function
+            send_high_risk_sms(file.filename, risk_score, phone)
+        else:
+            print(f"   -> Risk Score is {risk_score}. No SMS required.")
+        
+        print("7. Saving to NoSQL Database...")
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         document_record = {
             "filename": file.filename,
@@ -86,8 +125,6 @@ async def analyze_contract(file: UploadFile = File(...)):
         db.insert(document_record)
         
         print("--- PROCESS FINISHED SUCCESSFULLY ---\n")
-        
-        # Return to the frontend
         return {
             "filename": file.filename,
             "digital_signature": digital_signature,
