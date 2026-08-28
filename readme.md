@@ -11,10 +11,10 @@
 *Experience the cyberpunk-inspired glassmorphism UI.*
 
 **System Boot Sequence:**
-![Loading Animation](assets/loading.png)
+![Loading Animation](assets/loading.jpg)
 
 **Executive Dashboard:**
-![Dashboard Preview](assets/dashboard.png)
+![Dashboard Preview](assets/dashboard.jpg)
 
 *(Clone the repo to see the live AI analysis and animations in action!)*
 
